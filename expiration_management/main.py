@@ -1,7 +1,15 @@
-test_price = 1000
-discount_percent = 10
-remaining_days = 4
+import sys
+from datetime import datetime
 
-total_discount = test_price * (discount_percent / 100) * remaining_days
 
-print(total_discount)
+def main():
+    print("=" * 40)
+    print(" " * 15 + "ZEROWASTE")
+    print("=" * 40)
+    
+    print("""
+[1] Register 
+[2] Login""")
+
+if __name__ == "__main__":
+    main()
