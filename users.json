@@ -1,0 +1,25 @@
+[
+    {
+        "user_id": "U0001",
+        "username": "aldrix",
+        "password": "aldrix",
+        "role": "Admin",
+        "phone": "",
+        "area": "",
+        "status": "Approved",
+        "trust_score": 0,
+        "date_created": "2026-10-22 22:35:02"
+    },
+    {
+        "user_id": "U0002",
+        "username": "CLARK",
+        "password": "clark",
+        "role": "Store Owner",
+        "phone": "09760851983",
+        "area": "BULACAN",
+        "status": "Pending",
+        "trust_score": 0,
+        "date_created": "2026-10-22 22:35:36",
+        "verification_docs": {}
+    }
+]
