@@ -17,9 +17,10 @@ STORAGE_DIR = "Storage"
 
 CATEGORIES = ["FRESH PRODUCE", "DAIRY", "MEAT",
               "FROZEN", "PACKAGE", "CANNED", "DONATION", "OTHER"]
-
+MAX_ITEMS_PER_CATEGORY_PER_DAY = 3
 DISCOUNT_BY_DAYS = {"same_day": 80, "above_7_days": 10,
                     7: 20, 6: 25, 5: 30, 4: 35, 3: 40, 2: 45, 1: 50}
+
 
 # ============================================================
 # JSON STORAGE AND ID HELPERS
@@ -210,8 +211,8 @@ def upload_document(document_name, user):
     user_storage_dir = os.path.join(STORAGE_DIR, user["user_id"])
     os.makedirs(user_storage_dir, exist_ok=True)
     document_type = document_name.lower().replace(" ", "_")
-    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    filename = f"{document_type}_{timestamp_str}_{os.path.basename(selected_path)}"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"{document_type}_{timestamp}_{os.path.basename(selected_path)}"
     destination = os.path.join(user_storage_dir, filename)
     shutil.copy(selected_path, destination)
     print(f"Saved document to {destination}")
@@ -455,19 +456,15 @@ def browse_products(user, users, stores, products, purchases, reports):
     for product, store in matches:
         price, percent = calculate_discount(
             product["original_price"], get_remaining_days(product["expiration_date"]))
-        max_allowed = get_max_allowed_for_customer(user, purchases, product["category"], product["quantity"])
-        max_purchasable = min(product["quantity"], max_allowed)
-
         print(
             f"\n{product['product_id']} | {product['name']} | {product['category']}")
         print(
             f"Store: {store['store_name']} | Area: {store['area']} | Stock: {product['quantity']}")
         print(
             f"Expires: {product['expiration_date']} | PHP {price:.2f} ({percent}% off)")
-        print(f"Max quantity you can request today: {max_purchasable}")
 
     product_id = input(
-        "\nProduct ID to request (Enter to cancel): ").strip().upper()
+        "Product ID to request (Enter to cancel): ").strip().upper()
     if not product_id:
         return
     product = find_record(products, "product_id", product_id)
@@ -478,24 +475,20 @@ def browse_products(user, users, stores, products, purchases, reports):
     if not store or store.get("status") != "Approved":
         print("Store is not approved.")
         return
-
-    max_allowed = get_max_allowed_for_customer(user, purchases, product["category"], product["quantity"])
-    max_purchasable = min(product["quantity"], max_allowed)
-
-    if max_purchasable <= 0:
-        print("You have reached your daily purchase limit for this category.")
-        return
-
     try:
-        quantity = int(input(f"Quantity to request (1-{max_purchasable}): ").strip())
+        quantity = int(input("Quantity to request: ").strip())
     except ValueError:
         print("Enter a valid quantity.")
         return
-    if quantity <= 0 or quantity > max_purchasable:
-        print(f"Invalid quantity! Maximum allowed is {max_purchasable}.")
+    if quantity <= 0 or quantity > product.get("quantity", 0):
+        print("Invalid quantity or insufficient stock.")
         return
     if get_remaining_days(product["expiration_date"]) < 0:
         print("Expired products cannot be purchased.")
+        return
+    if not daily_limit_allows(user, purchases, product["category"], quantity):
+        print(
+            f"Daily limit is {MAX_ITEMS_PER_CATEGORY_PER_DAY} items per category.")
         return
 
     print("1. Store Pickup\n2. Same-Day Express (arranged with store)")
@@ -528,36 +521,20 @@ def browse_products(user, users, stores, products, purchases, reports):
         f"Purchase request {purchase['purchase_id']} submitted. Receipt will be issued after confirmation.")
 
 
-def get_max_allowed_for_customer(customer, purchases, category, total_product_stock, exclude_purchase_id=None):
-    """Calculates remaining quantity a customer can buy today based on percentage limit."""
-    if total_product_stock <= 0:
-        return 0
-
+def daily_limit_allows(customer, purchases, category, requested_quantity, exclude_purchase_id=None):
+    """Count today's pending and confirmed purchases in the same category."""
     today = date.today().isoformat()
-    used_quantity = 0
+    used = 0
     for purchase in purchases:
         if purchase.get("customer_id") != customer.get("user_id"):
             continue
-        if (
-            purchase.get("category") != category
-            or purchase.get("purchase_id") == exclude_purchase_id
-        ):
+        if purchase.get("category") != category or purchase.get("purchase_id") == exclude_purchase_id:
             continue
         if not str(purchase.get("created_at", "")).startswith(today):
             continue
         if purchase.get("status") in ("Pending", "Confirmed", "Completed"):
-            used_quantity += int(purchase.get("quantity", 0))
-
-    max_items_per_category = 0.15 if used_quantity < total_product_stock else 0.20
-    max_allowed_units = int(total_product_stock * max_items_per_category)
-
-    return max(0, max_allowed_units - used_quantity)
-
-
-def daily_limit_allows(customer, purchases, category, requested_quantity, total_product_stock, exclude_purchase_id=None):
-    """Check if customer request is within their allowed daily limit."""
-    remaining_allowance = get_max_allowed_for_customer(customer, purchases, category, total_product_stock, exclude_purchase_id)
-    return requested_quantity <= remaining_allowance
+            used += int(purchase.get("quantity", 0))
+    return used + requested_quantity <= MAX_ITEMS_PER_CATEGORY_PER_DAY
 
 
 # ============================================================
@@ -615,7 +592,7 @@ def review_purchase_requests(user, users, stores, products, purchases, reports):
             if product["quantity"] < purchase["quantity"]:
                 print("Cannot confirm: not enough stock.")
                 continue
-            if not customer or not daily_limit_allows(customer, purchases, purchase["category"], purchase["quantity"], product["quantity"], purchase["purchase_id"]):
+            if not customer or not daily_limit_allows(customer, purchases, purchase["category"], purchase["quantity"], purchase["purchase_id"]):
                 print("Cannot confirm: daily category limit would be exceeded.")
                 continue
             product["quantity"] -= purchase["quantity"]
