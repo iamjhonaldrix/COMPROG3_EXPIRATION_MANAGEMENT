@@ -8,18 +8,32 @@
         "area": "",
         "status": "Approved",
         "trust_score": 0,
-        "date_created": "2026-10-22 22:35:02"
+        "date_created": "2026-10-23 00:13:40"
     },
     {
         "user_id": "U0002",
-        "username": "CLARK",
-        "password": "clark",
+        "username": "rain",
+        "password": "rain",
         "role": "Store Owner",
         "phone": "09760851983",
         "area": "BULACAN",
         "status": "Pending",
         "trust_score": 0,
-        "date_created": "2026-10-22 22:35:36",
+        "date_created": "2026-10-23 00:13:56",
         "verification_docs": {}
+    },
+    {
+        "user_id": "U0003",
+        "username": "ria",
+        "password": "ria",
+        "role": "Customer",
+        "phone": "09760851983",
+        "area": "BULACAN",
+        "status": "Approved",
+        "trust_score": 0,
+        "date_created": "2026-10-23 00:14:40",
+        "verification_docs": {
+            "national_id": "Storage\\U0003\\national_id_20261023_001450_913479_hack.png"
+        }
     }
 ]

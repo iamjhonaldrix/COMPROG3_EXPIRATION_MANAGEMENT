@@ -1,1 +1,14 @@
-[]
+[
+    {
+        "product_id": "P0001",
+        "store_id": "S0001",
+        "name": "pandesal",
+        "category": "PACKAGE",
+        "original_price": 5.0,
+        "quantity": 200,
+        "expiration_date": "2026-10-28",
+        "status": "Available",
+        "date_posted": "2026-10-23 00:15:50",
+        "last_updated": "2026-10-23 00:15:50"
+    }
+]
