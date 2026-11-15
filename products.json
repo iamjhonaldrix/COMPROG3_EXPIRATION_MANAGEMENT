@@ -1,1 +1,110 @@
-[]
+[
+  {
+    "product_id": "P0001",
+    "store_id": "S0001",
+    "name": "Pandesal (12 pcs)",
+    "category": "PACKAGE",
+    "original_price": 50,
+    "quantity": 20,
+    "expiration_date": "2026-11-16",
+    "status": "Available",
+    "date_posted": "2026-11-15 08:00:00",
+    "last_updated": "2026-11-15 08:00:00"
+  },
+  {
+    "product_id": "P0002",
+    "store_id": "S0001",
+    "name": "Ensaymada",
+    "category": "PACKAGE",
+    "original_price": 120,
+    "quantity": 10,
+    "expiration_date": "2026-11-17",
+    "status": "Available",
+    "date_posted": "2026-11-15 08:10:00",
+    "last_updated": "2026-11-15 08:10:00"
+  },
+  {
+    "product_id": "P0003",
+    "store_id": "S0002",
+    "name": "Fresh Milk 1L",
+    "category": "DAIRY",
+    "original_price": 95,
+    "quantity": 15,
+    "expiration_date": "2026-11-19",
+    "status": "Available",
+    "date_posted": "2026-11-14 09:00:00",
+    "last_updated": "2026-11-15 10:30:00"
+  },
+  {
+    "product_id": "P0004",
+    "store_id": "S0002",
+    "name": "Chicken Breast 1kg",
+    "category": "MEAT",
+    "original_price": 250,
+    "quantity": 8,
+    "expiration_date": "2026-11-21",
+    "status": "Available",
+    "date_posted": "2026-11-14 09:15:00",
+    "last_updated": "2026-11-14 09:15:00"
+  },
+  {
+    "product_id": "P0005",
+    "store_id": "S0002",
+    "name": "Canned Tuna",
+    "category": "CANNED",
+    "original_price": 40,
+    "quantity": 30,
+    "expiration_date": "2026-11-23",
+    "status": "Available",
+    "date_posted": "2026-11-13 14:00:00",
+    "last_updated": "2026-11-13 14:00:00"
+  },
+  {
+    "product_id": "P0006",
+    "store_id": "S0001",
+    "name": "Frozen Dumplings",
+    "category": "FROZEN",
+    "original_price": 180,
+    "quantity": 12,
+    "expiration_date": "2026-12-10",
+    "status": "Available",
+    "date_posted": "2026-11-12 11:00:00",
+    "last_updated": "2026-11-12 11:00:00"
+  },
+  {
+    "product_id": "P0007",
+    "store_id": "S0001",
+    "name": "Croissant",
+    "category": "PACKAGE",
+    "original_price": 60,
+    "quantity": 0,
+    "expiration_date": "2026-11-17",
+    "status": "Sold Out",
+    "date_posted": "2026-11-15 08:20:00",
+    "last_updated": "2026-11-15 16:00:00"
+  },
+  {
+    "product_id": "P0008",
+    "store_id": "S0002",
+    "name": "Strawberry Yogurt",
+    "category": "DAIRY",
+    "original_price": 35,
+    "quantity": 5,
+    "expiration_date": "2026-11-14",
+    "status": "Available",
+    "date_posted": "2026-11-10 10:00:00",
+    "last_updated": "2026-11-10 10:00:00"
+  },
+  {
+    "product_id": "P0009",
+    "store_id": "S0002",
+    "name": "Romaine Lettuce",
+    "category": "FRESH PRODUCE",
+    "original_price": 80,
+    "quantity": 6,
+    "expiration_date": "2026-11-18",
+    "status": "Removed",
+    "date_posted": "2026-11-13 09:00:00",
+    "last_updated": "2026-11-15 12:00:00"
+  }
+]

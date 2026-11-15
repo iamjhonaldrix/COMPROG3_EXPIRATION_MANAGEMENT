@@ -369,6 +369,7 @@ def verification_menu(user: Record, state: AppState) -> None:
                     print("Invalid mobile number.")
                     continue
                 user["phone"] = phone
+                break
 
         elif choice == "2":
             if user.get("role") == "Store Owner":
