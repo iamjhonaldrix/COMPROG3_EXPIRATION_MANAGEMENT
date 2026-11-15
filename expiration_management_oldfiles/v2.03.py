@@ -4,7 +4,6 @@ import shutil
 import tkinter as tk
 from tkinter import filedialog
 from datetime import datetime, date, timedelta
-import re 
 
 # ============================================================
 # CONFIGURATION
@@ -45,8 +44,6 @@ DISCOUNT_BY_DAYS = {
     2: 45, 
     1: 50
 }
-
-pattern_num = r"^(?:\+?63|0)?(9\d{2})[\s\-]?(\d{3})[\s\-]?(\d{4})$"
 
 # ============================================================
 # JSON STORAGE AND ID HELPERS
@@ -111,7 +108,7 @@ def load_json(filename):
     except (json.JSONDecodeError, ValueError):
         save_json(filename, [])
         return []
-
+    
 def save_all(users, stores, products, purchases, reports, admins, super_admin):
     save_json(USERS_FILE, users)
     save_json(STORES_FILE, stores)
@@ -131,7 +128,6 @@ def load_data():
     """Load each data collection and administrator credentials."""
     users = load_json(USERS_FILE) or []
     admins = load_json(ADMIN_FILE) or []
-    super_admin = load_json(SUPER_ADMIN_FILE) or []
     stores = load_json(STORES_FILE) or []
     products = load_json(PRODUCTS_FILE) or []
     purchases = load_json(PURCHASES_FILE) or []
@@ -142,10 +138,10 @@ def load_data():
     if documents_reorganized:
         save_json(USERS_FILE, users)
 
-    return users, admins, super_admin, stores, products, purchases, reports
+    return users, admins, stores, products, purchases, reports
 
 # ============================================================
-# FUNCTION FOR ID NUMBER GENERATOR
+#FUNCTION FOR ID NUMBER GENERATOR
 # ============================================================
 
 def next_id(records, field, prefix):
@@ -181,6 +177,7 @@ def get_remaining_days(expiration_date):
 
 def calculate_discount(price, remaining_days):
     """Return the discounted price and discount percentage; expired food is not sellable."""
+    
     if remaining_days < 0:
         return 0.0, 0
     if remaining_days == 0:
@@ -316,7 +313,7 @@ def upload_document(document_name, user):
     return destination
 
 
-def verification_menu(user, users, admins, super_admin, stores, products, purchases, reports):
+def verification_menu(user, users, stores, products, purchases, reports):
     user.setdefault("verification_docs", {})
     while True:
         print("\n--- VERIFICATION DETAILS ---")
@@ -352,7 +349,7 @@ def verification_menu(user, users, admins, super_admin, stores, products, purcha
                 ).strip()
 
                 if upload_choice == str(back_choice):
-                    save_state(users, stores, products, purchases, reports, admins, super_admin)
+                    save_state(users, stores, products, purchases, reports)
                     print("Verification documents saved.")
                     break
 
@@ -368,7 +365,7 @@ def verification_menu(user, users, admins, super_admin, stores, products, purcha
                 else:
                     print("Invalid choice.")
         elif choice == "3":
-            save_state(users, stores, products, purchases, reports, admins, super_admin)
+            save_state(users, stores, products, purchases, reports)
             print("Details saved.")
             return
         else:
@@ -380,7 +377,7 @@ def verification_menu(user, users, admins, super_admin, stores, products, purcha
 # ============================================================
 
 
-def register_user(users, admins, super_admins, stores, products, purchases, reports):
+def register_user(users, admins, stores, products, purchases, reports):
     print("\n--- REGISTER ---")
     print("1. Customer\n2. Store Owner")
     role_choice = input("Select role: ").strip()
@@ -414,15 +411,6 @@ def register_user(users, admins, super_admins, stores, products, purchases, repo
         return
 
     phone = input("Phone number: ").strip()
-    
-    #match the phone number format to the pattern_num 
-    match = re.match(pattern_num, phone)
-    
-    if match:
-        pass
-    else:
-        print("Invalid mobile number.")
-    
     area = input("City/Area: ").strip().upper()
 
     if role == "Store Owner":
@@ -463,7 +451,7 @@ def register_user(users, admins, super_admins, stores, products, purchases, repo
     else:
         print("Customer account created.")
 
-    save_state(users, stores, products, purchases, reports, admins, super_admins)
+    save_state(users, stores, products, purchases, reports)
 
 
 def login_user(users, admins):
@@ -511,7 +499,7 @@ def login_user(users, admins):
 # ============================================================
 
 
-def expiry_guard(users, stores, products, purchases, reports, admins, super_admin):
+def expiry_guard(users, stores, products, purchases, reports):
     """Keep old listings in the data and mark them Expired instead of deleting them."""
     changed = False
     for product in products:
@@ -527,10 +515,10 @@ def expiry_guard(users, stores, products, purchases, reports, admins, super_admi
             changed = True
 
     if changed:
-        save_state(users, stores, products, purchases, reports, admins, super_admin)
+        save_state(users, stores, products, purchases, reports)
 
 
-def post_product(user, users, stores, products, purchases, reports, admins, super_admin):
+def post_product(user, users, stores, products, purchases, reports):
     store = get_owner_store(user, stores)
     if not store or store.get("status") != "Approved":
         print("Your store must be approved before you can post products.")
@@ -591,12 +579,12 @@ def post_product(user, users, stores, products, purchases, reports, admins, supe
             "last_updated": timestamp(),
         }
     )
-    save_state(users, stores, products, purchases, reports, admins, super_admin)
+    save_state(users, stores, products, purchases, reports)
     print("Product posted successfully.")
 
 
-def browse_products(user, users, stores, products, purchases, reports, admins, super_admin):
-    expiry_guard(users, stores, products, purchases, reports, admins, super_admin)
+def browse_products(user, users, stores, products, purchases, reports):
+    expiry_guard(users, stores, products, purchases, reports)
     print("\n--- BROWSE PRODUCTS ---")
     user_area = user.get("area", "")
     print(
@@ -668,6 +656,10 @@ def browse_products(user, users, stores, products, purchases, reports, admins, s
             product["original_price"],
             get_remaining_days(product["expiration_date"]),
         )
+        max_allowed = get_max_allowed_for_customer(
+            user, purchases, product["category"], product["quantity"]
+        )
+        max_purchasable = min(product["quantity"], max_allowed)
 
         print(
             f"\n{product['product_id']} | {product['name']} | {product['category']}"
@@ -678,6 +670,7 @@ def browse_products(user, users, stores, products, purchases, reports, admins, s
         print(
             f"Expires: {product['expiration_date']} | PHP {price:.2f} ({percent}% off)"
         )
+        print(f"Max quantity you can request today: {max_purchasable}")
 
     product_id = input(
         "\nProduct ID to request (Enter to cancel): "
@@ -695,20 +688,24 @@ def browse_products(user, users, stores, products, purchases, reports, admins, s
         print("Store is not approved.")
         return
 
-    available_stock = product.get("quantity", 0)
-    if available_stock <= 0:
-        print("Product is out of stock.")
+    max_allowed = get_max_allowed_for_customer(
+        user, purchases, product["category"], product["quantity"]
+    )
+    max_purchasable = min(product["quantity"], max_allowed)
+
+    if max_purchasable <= 0:
+        print("You have reached your daily purchase limit for this category.")
         return
 
     try:
-        qty_input = input(f"Quantity to request (1-{available_stock}): ").strip()
+        qty_input = input(f"Quantity to request (1-{max_purchasable}): ").strip()
         quantity = int(qty_input)
     except ValueError:
         print("Enter a valid quantity.")
         return
 
-    if quantity <= 0 or quantity > available_stock:
-        print(f"Invalid quantity! Available stock is {available_stock}.")
+    if quantity <= 0 or quantity > max_purchasable:
+        print(f"Invalid quantity! Maximum allowed is {max_purchasable}.")
         return
 
     if get_remaining_days(product["expiration_date"]) < 0:
@@ -748,10 +745,70 @@ def browse_products(user, users, stores, products, purchases, reports, admins, s
         "updated_at": timestamp(),
     }
     purchases.append(purchase)
-    save_state(users, stores, products, purchases, reports, admins, super_admin)
+    save_state(users, stores, products, purchases, reports)
     print(
         f"Purchase request {purchase['purchase_id']} submitted. Receipt will be issued after confirmation."
     )
+
+
+def get_max_allowed_for_customer(
+    customer,
+    purchases,
+    category,
+    total_product_stock,
+    exclude_purchase_id=None,
+):
+    """Calculates remaining quantity a customer can buy today based on percentage limit."""
+    if total_product_stock <= 0:
+        return 0
+
+    today = date.today().isoformat()
+    used_quantity = 0
+
+    for purchase in purchases:
+        if purchase.get("customer_id") != customer.get("user_id"):
+            continue
+
+        if purchase.get("category") != category:
+            continue
+
+        if purchase.get("purchase_id") == exclude_purchase_id:
+            continue
+
+        created_str = str(purchase.get("created_at", ""))
+        if not created_str.startswith(today):
+            continue
+
+        if purchase.get("status") in ("Pending", "Confirmed", "Completed"):
+            used_quantity += int(purchase.get("quantity", 0))
+
+    if used_quantity < total_product_stock:
+        max_items_per_category = 0.15
+    else:
+        max_items_per_category = 0.20
+
+    max_allowed_units = int(total_product_stock * max_items_per_category)
+    return max(0, max_allowed_units - used_quantity)
+
+
+def daily_limit_allows(
+    customer,
+    purchases,
+    category,
+    requested_quantity,
+    total_product_stock,
+    exclude_purchase_id=None,
+):
+    """Check if customer request is within their allowed daily limit."""
+    remaining_allowance = get_max_allowed_for_customer(
+        customer,
+        purchases,
+        category,
+        total_product_stock,
+        exclude_purchase_id,
+    )
+    return requested_quantity <= remaining_allowance
+
 
 # ============================================================
 # PURCHASE CONFIRMATION AND RECEIPTS
@@ -781,7 +838,7 @@ def print_receipt(purchase):
 
 
 def review_purchase_requests(
-    user, users, stores, products, purchases, reports, admins, super_admin
+    user, users, stores, products, purchases, reports
 ):
     store = get_owner_store(user, stores)
     if not store:
@@ -824,6 +881,23 @@ def review_purchase_requests(
                 print("Cannot confirm: not enough stock.")
                 continue
 
+            has_limit = False
+            if customer:
+                has_limit = daily_limit_allows(
+                    customer,
+                    purchases,
+                    purchase["category"],
+                    purchase["quantity"],
+                    product["quantity"],
+                    purchase["purchase_id"],
+                )
+
+            if not customer or not has_limit:
+                print(
+                    "Cannot confirm: daily category limit would be exceeded."
+                )
+                continue
+
             product["quantity"] -= purchase["quantity"]
             product["last_updated"] = timestamp()
             if product["quantity"] == 0:
@@ -834,8 +908,7 @@ def review_purchase_requests(
             purchase["updated_at"] = timestamp()
             purchase["receipt_number"] = purchase["purchase_id"]
 
-            if customer:
-                customer["trust_score"] = customer.get("trust_score", 0) + 1
+            customer["trust_score"] = customer.get("trust_score", 0) + 1
             store["trust_score"] = store.get("trust_score", 0) + 1
 
             print_receipt(purchase)
@@ -850,7 +923,7 @@ def review_purchase_requests(
         else:
             print("Invalid choice.")
 
-    save_state(users, stores, products, purchases, reports, admins, super_admin)
+    save_state(users, stores, products, purchases, reports)
 
 
 def view_my_purchases(user, purchases):
@@ -877,7 +950,7 @@ def view_my_purchases(user, purchases):
 # ============================================================
 
 
-def admin_panel(users, stores, products, purchases, reports, admins, super_admin):
+def admin_panel(users, stores, products, purchases, reports):
     pending = []
     for store in stores:
         if store.get("status") == "Pending":
@@ -978,10 +1051,10 @@ def admin_panel(users, stores, products, purchases, reports, admins, super_admin
         print("Invalid decision.")
         return
 
-    save_state(users, stores, products, purchases, reports, admins, super_admin)
+    save_state(users, stores, products, purchases, reports)
 
 
-def create_report(user, users, stores, products, purchases, reports, admins, super_admin):
+def create_report(user, users, stores, products, purchases, reports):
     product_id = input("Product ID to report: ").strip().upper()
     product = find_record(products, "product_id", product_id)
     if not product:
@@ -1004,11 +1077,11 @@ def create_report(user, users, stores, products, purchases, reports, admins, sup
             "created_at": timestamp(),
         }
     )
-    save_state(users, stores, products, purchases, reports, admins, super_admin)
+    save_state(users, stores, products, purchases, reports)
     print("Report submitted for review.")
 
 
-def review_reports(users, stores, products, purchases, reports, admins, super_admin):
+def review_reports(users, stores, products, purchases, reports):
     pending = []
     for report in reports:
         if report.get("status") == "Pending":
@@ -1047,7 +1120,7 @@ def review_reports(users, stores, products, purchases, reports, admins, super_ad
         else:
             print("Report dismissed.")
 
-    save_state(users, stores, products, purchases, reports, admins, super_admin)
+    save_state(users, stores, products, purchases, reports)
 
 
 # ============================================================
@@ -1055,7 +1128,7 @@ def review_reports(users, stores, products, purchases, reports, admins, super_ad
 # ============================================================
 
 
-def user_dashboard(user, users, stores, products, purchases, reports, admins, super_admin):
+def user_dashboard(user, users, stores, products, purchases, reports):
     while True:
         username = user["username"]
         role = user["role"]
@@ -1070,9 +1143,9 @@ def user_dashboard(user, users, stores, products, purchases, reports, admins, su
             print("1. Review store applications\n2. Review reports\n0. Logout")
             choice = input("Choice: ").strip()
             if choice == "1":
-                admin_panel(users, stores, products, purchases, reports, admins, super_admin)
+                admin_panel(users, stores, products, purchases, reports)
             elif choice == "2":
-                review_reports(users, stores, products, purchases, reports, admins, super_admin)
+                review_reports(users, stores, products, purchases, reports)
             elif choice == "0":
                 return
             else:
@@ -1091,7 +1164,7 @@ def user_dashboard(user, users, stores, products, purchases, reports, admins, su
             choice = input("Choice: ").strip()
             if choice == "1":
                 post_product(
-                    user, users, stores, products, purchases, reports, admins, super_admin
+                    user, users, stores, products, purchases, reports
                 )
             elif choice == "2":
                 own_products = []
@@ -1107,11 +1180,11 @@ def user_dashboard(user, users, stores, products, purchases, reports, admins, su
                     )
             elif choice == "3":
                 review_purchase_requests(
-                    user, users, stores, products, purchases, reports, admins, super_admin
+                    user, users, stores, products, purchases, reports
                 )
             elif choice == "4":
                 verification_menu(
-                    user, users, admins, super_admin, stores, products, purchases, reports
+                    user, users, stores, products, purchases, reports
                 )
             elif choice == "0":
                 return
@@ -1125,17 +1198,17 @@ def user_dashboard(user, users, stores, products, purchases, reports, admins, su
             choice = input("Choice: ").strip()
             if choice == "1":
                 browse_products(
-                    user, users, stores, products, purchases, reports, admins, super_admin
+                    user, users, stores, products, purchases, reports
                 )
             elif choice == "2":
                 view_my_purchases(user, purchases)
             elif choice == "3":
                 create_report(
-                    user, users, stores, products, purchases, reports, admins, super_admin
+                    user, users, stores, products, purchases, reports
                 )
             elif choice == "4":
                 verification_menu(
-                    user, users, admins, super_admin, stores, products, purchases, reports
+                    user, users, stores, products, purchases, reports
                 )
             elif choice == "0":
                 return
@@ -1149,10 +1222,10 @@ def user_dashboard(user, users, stores, products, purchases, reports, admins, su
 
 
 def main():
-    users, admins, super_admin, stores, products, purchases, reports = load_data()
+    users, admins, stores, products, purchases, reports = load_data()
 
     while True:
-        expiry_guard(users, stores, products, purchases, reports, admins, super_admin)
+        expiry_guard(users, stores, products, purchases, reports)
         print("\n" + "=" * 42)
         print("              ZEROWASTE")
         print("=" * 42)
@@ -1164,12 +1237,12 @@ def main():
             user = login_user(users, admins)
             if user:
                 user_dashboard(
-                    user, users, stores, products, purchases, reports, admins, super_admin
+                    user, users, stores, products, purchases, reports
                 )
         elif choice == "2":
-            register_user(users, admins, super_admin, stores, products, purchases, reports)
+            register_user(users, admins, stores, products, purchases, reports)
         elif choice == "0":
-            save_state(users, stores, products, purchases, reports, admins, super_admin)
+            save_state(users, stores, products, purchases, reports)
             print("Data saved. Goodbye!")
             break
         else:

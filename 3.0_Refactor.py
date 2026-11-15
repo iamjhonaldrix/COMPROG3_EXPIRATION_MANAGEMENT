@@ -161,8 +161,6 @@ class JSONStorage:
             if record.get("date_created") is None:
                 record["date_created"] = timestamp()
         return copied
-       
-       
       
 
     @classmethod
