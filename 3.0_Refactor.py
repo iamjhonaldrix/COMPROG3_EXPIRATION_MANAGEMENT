@@ -363,11 +363,12 @@ def verification_menu(user: Record, state: AppState) -> None:
         choice = input("Select: ").strip()
 
         if choice == "1":
-            phone = input("Phone number: ").strip()
-            if not PHONE_PATTERN.fullmatch(phone):
-                print("Invalid mobile number.")
-                continue
-            user["phone"] = phone
+            while True:
+                phone = input("Phone number: ").strip()
+                if not PHONE_PATTERN.fullmatch(phone):
+                    print("Invalid mobile number.")
+                    continue
+                user["phone"] = phone
 
         elif choice == "2":
             if user.get("role") == "Store Owner":
@@ -455,10 +456,12 @@ def register_user(state: AppState) -> None:
         print("Password cannot be empty.")
         return
 
-    phone = input("Phone number: ").strip()
-    if not PHONE_PATTERN.fullmatch(phone):
-        print("Invalid mobile number.")
-        return
+    while True:
+        phone = input("Phone number: ").strip()
+        if not PHONE_PATTERN.fullmatch(phone):
+            print("Invalid mobile number.")
+        else:
+            break
 
     area = input("City/Area: ").strip().upper()
     status = "Pending" if role == "Store Owner" else "Approved"
